@@ -1,0 +1,29 @@
+Testes de Serviço, também chamados de Testes de API, Web Services, Mensageria
+
+Camada de comunicação e interoperabilidade entre sistemas
+
+1990-2000: Sincrona
+2010-atual: Assincrona --> Ideal
+
+Tipos de Ferramentas de Teste de API
+- por configuração: Postman, Imsomnia, SoapUI, WCFStorm
+- por programação: Requests (Robot Framework), REST-assured, RestSharp, Supertest
+  |---> é ideal para CI/CD
+
+Tipos de Documentação de API
+- Automatica
+- Swagger (mais fácil)
+- Manual
+
+Métodos de uma API
+- Post   - (C)reate - Incluir
+- Get    - (R)ead   - Consultar
+- Put    - (U)pdate - Atualizar total
+- Patch  - (U)pdate - Atualizar seletivo
+- Delete - (D)elete - Excluir
+
+
+Em Python, o uso de underlines indica itens "mágicos"
+é uma forma de destacar algo que é mais importante
+
+Arquiteturas de APIs
