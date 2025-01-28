@@ -3,6 +3,8 @@ import pytest
 import requests
 import json
 
+from utils.utils import ler_csv
+
 # (Opcional) 2 - Classe
 
 # 2.1 Atributos/Propriedades
@@ -20,20 +22,20 @@ headers = { "Content-Type": "application/json" }
 # headers = { "Content-Type: text/xml" } # se fosse SOAP
 
 # 2.2 Funções e Metódos de Apoio
-@pytest.fixture
-def validar_pet(response):
-    def _validar(pet): # função interna / nested function
-        response_body = response.json() # formata a resposta como json
 
-        assert response.status_code == 200
-        assert response_body["id"] == pet_id
-        assert response_body["name"] == pet_name
-        assert response_body["category"]["id"] == pet_category_id
-        assert response_body["category"]["name"] == pet_category_name
-        assert response_body["tags"][0]["id"] == pet_tag_id
-        assert response_body["tags"][0]["name"] == pet_tag_name
-    
-    return _validar
+def validar_pet(response, status):
+
+    response_body = response.json() # formata a resposta como json
+
+    assert response.status_code == 200
+    assert response_body["id"] == pet_id
+    assert response_body["name"] == pet_name
+    assert response_body["category"]["id"] == pet_category_id
+    assert response_body["category"]["name"] == pet_category_name
+    assert response_body["tags"][0]["id"] == pet_tag_id
+    assert response_body["tags"][0]["name"] == pet_tag_name
+    assert response_body["status"] == status
+
 
 # 2.3 Funções de Teste
 @pytest.mark.order(1)
@@ -49,19 +51,9 @@ def test_post_pet():
         data=json.dumps(data), # json body da mensagem a ser enviada
         timeout=5
     )
-
-    # Assert / Valida (Afirmação)
-    response_body = response.json() # formata a resposta como json
-    # validar_pet(response)
-    assert response.status_code == 200
-    assert response_body["id"] == pet_id
-    assert response_body["name"] == pet_name
-    assert response_body["category"]["id"] == pet_category_id
-    assert response_body["category"]["name"] == pet_category_name
-    assert response_body["tags"][0]["id"] == pet_tag_id
-    assert response_body["tags"][0]["name"] == pet_tag_name
-    assert response_body["status"] == pet_status1
-
+    
+    validar_pet(response, pet_status1)
+    
 @pytest.mark.order(2)
 def test_get_pet():
     # Arrange / Configura
@@ -77,16 +69,7 @@ def test_get_pet():
     )
 
     # Assert / Valida (Afirmação)
-    response_body = response.json() # formata a resposta como json
-
-    assert response.status_code == 200
-    assert response_body["id"] == pet_id
-    assert response_body["name"] == pet_name
-    assert response_body["category"]["id"] == pet_category_id
-    assert response_body["category"]["name"] == pet_category_name
-    assert response_body["tags"][0]["id"] == pet_tag_id
-    assert response_body["tags"][0]["name"] == pet_tag_name
-    assert response_body["status"] == pet_status1
+    validar_pet(response, pet_status1)
 
 @pytest.mark.order(3)
 def test_put_pet():
@@ -103,17 +86,7 @@ def test_put_pet():
     )
 
     # Assert / Valida (Afirmação)
-    response_body = response.json() # formata a resposta como json
-
-    assert response.status_code == 200
-    assert response_body["id"] == pet_id
-    assert response_body["name"] == pet_name
-    assert response_body["category"]["id"] == pet_category_id
-    assert response_body["category"]["name"] == pet_category_name
-    assert response_body["tags"][0]["id"] == pet_tag_id
-    assert response_body["tags"][0]["name"] == pet_tag_name
-    assert response_body["status"] == pet_status2
-
+    validar_pet(response, pet_status2)
 
 @pytest.mark.order(4)
 def test_delete_pet():
@@ -134,3 +107,45 @@ def test_delete_pet():
     assert response_body["code"] == 200     # valida o funcionamento
     assert response_body["type"] == "unknown"
     assert response_body["message"] == str(pet_id)
+
+# Post Parametrizado - Leitura da Massa
+@pytest.mark.order(5)
+@pytest.mark.parametrize("id,category_id,category_name,name,tags,status",
+        ler_csv("./fixtures/csv/pets.csv"))
+def test_post_pet_dinamico(id,category_id,category_name,name,tags,status):
+    pet = {}
+    pet["id"] = int(id)
+    pet["category"] = {}
+    pet["category"]["id"] = int(category_id)
+    pet["category"]["name"] = category_name
+    pet["name"] = name
+    pet["photoUrls"] = []
+    pet["tags"] = []
+
+    tags = tags.split(";")
+    for tag in tags:
+        tag = tag.split("-")
+        tag_formatada = {}
+        tag_formatada["id"] = int(tag[0])
+        tag_formatada["name"] = tag[1]
+        pet["tags"].append(tag_formatada)
+
+    pet["status"] = status
+
+    # Act / Execute
+    response = requests.post(
+        url=url,
+        headers=headers,
+        data=json.dumps(obj=pet, indent=4), # json body da mensagem a ser enviada
+        timeout=5
+    )
+
+    # Assert / Valida (Afirmação)
+    response_body = response.json() # formata a resposta como json
+    # validar_pet(response)
+    assert response.status_code == 200
+    assert response_body["id"] == int(id)
+    assert response_body["name"] == name
+    assert response_body["category"]["id"] == int(category_id)
+    assert response_body["category"]["name"] == category_name
+    assert response_body["status"] == status
